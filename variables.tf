@@ -90,6 +90,24 @@ variable "georeplications" {
   description = "Regions to geo-replicate to"
 }
 
+variable "network_rule_set" {
+  type = object({
+    default_action = optional(string, "Deny")
+    ip_rules = optional(list(object({
+      action   = optional(string, "Allow")
+      ip_range = string
+    })), [])
+    virtual_network_rules = optional(list(object({
+      action    = optional(string, "Allow")
+      subnet_id = string
+    })), [])
+  })
+  default = {
+    default_action = "Deny"
+  }
+  description = "ACR firewall configuration"
+}
+
 variable "log_analytics_workspace_name" {
   type        = string
   description = "Name of Log Analytics Workspace to send diagnostics"

@@ -35,6 +35,31 @@ resource "azurerm_container_registry" "acr" {
     }
   }
 
+  dynamic "network_rule_set" {
+    for_each = [var.network_rule_set]
+    content {
+      default_action = network_rule_set.value["default_action"]
+
+      dynamic "ip_rule" {
+        for_each = { for k in network_rule_set.value["ip_rules"] : k.ip_range => k if k != null }
+
+        content {
+          action   = ip_rule.value["action"]
+          ip_range = ip_rule.value["ip_range"]
+        }
+      }
+
+      dynamic "virtual_network" {
+        for_each = { for k in network_rule_set.value["virtual_network_rules"] : k.subnet_id => k if k != null }
+
+        content {
+          action    = virtual_network.value["action"]
+          subnet_id = virtual_network.value["subnet_id"]
+        }
+      }
+    }
+  }
+
   tags = var.tags
 }
 

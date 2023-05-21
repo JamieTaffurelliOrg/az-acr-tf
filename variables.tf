@@ -108,6 +108,29 @@ variable "network_rule_set" {
   description = "ACR firewall configuration"
 }
 
+variable "subnet_name" {
+  type        = string
+  description = "The name of the resource group of the subnet to deploy private endpoint"
+}
+
+variable "virtual_network_name" {
+  type        = string
+  description = "The name of the resource group of the subnet to deploy private endpoint"
+}
+
+variable "subnet_resource_group_name" {
+  type        = string
+  description = "The name of the resource group of the subnet to deploy private endpoint"
+}
+
+variable "private_dns_zones" {
+  type = list(object({
+    name                = string
+    resource_group_name = string
+  }))
+  description = "Private DNS zones to link to Redis Private Endpoint"
+}
+
 variable "log_analytics_workspace_name" {
   type        = string
   description = "Name of Log Analytics Workspace to send diagnostics"

@@ -60,8 +60,39 @@ resource "azurerm_container_registry" "acr" {
     }
   }
 
-
   tags = var.tags
+}
+
+resource "azurerm_private_endpoint" "private_endpoint" {
+  name                = "${azurerm_container_registry.acr.name}-pep-1"
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  subnet_id           = data.azurerm_subnet.subnet.id
+
+  private_service_connection {
+    name                           = "${azurerm_container_registry.acr.name}-psc-1"
+    private_connection_resource_id = azurerm_container_registry.acr.id
+    is_manual_connection           = false
+    subresource_names              = ["registry"]
+  }
+}
+
+resource "azurerm_resource_group_template_deployment" "private_dns_zone_group_template" {
+  name                = "${azurerm_container_registry.acr.name}-customdns"
+  resource_group_name = var.resource_group_name
+  template_content    = file("arm/privateDnsZoneGroup.json")
+  parameters_content = jsonencode({
+    "privateDnsZoneGroupName" = {
+      value = "customdns"
+    },
+    "privateEndpointName" = {
+      value = azurerm_private_endpoint.private_endpoint.name
+    },
+    "privateDnsZoneResourceIds" = {
+      value = [for private_dns_zone in data.azurerm_private_dns_zone.private_dns_zones : private_dns_zone.id]
+    }
+  })
+  deployment_mode = "Incremental"
 }
 
 resource "azurerm_monitor_diagnostic_setting" "acr_diagnostics" {

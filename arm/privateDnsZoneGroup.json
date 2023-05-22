@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "outputs": {},
+  "parameters": {
+    "privateDnsZoneGroupName": {
+      "type": "String"
+    },
+    "privateDnsZoneResourceIds": {
+      "type": "Array"
+    },
+    "privateEndpointName": {
+      "type": "String"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2022-07-01",
+      "name": "[concat(parameters('privateEndpointName'),'/', parameters('privateDnsZoneGroupName'))]",
+      "properties": {
+        "privateDnsZoneConfigs": "[variables('privateDnsZoneConfigs')]"
+      },
+      "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups"
+    }
+  ],
+  "variables": {
+    "copy": [
+      {
+        "count": "[length(parameters('privateDnsZoneResourceIds'))]",
+        "input": {
+          "name": "[concat(parameters('privateEndpointName'), '-', parameters('privateDnsZoneGroupName'), '-', last(split(parameters('privateDnsZoneResourceIds')[copyIndex('privateDnsZoneConfigs', 0)], '/')))]",
+          "properties": {
+            "privateDnsZoneId": "[parameters('privateDnsZoneResourceIds')[copyIndex('privateDnsZoneConfigs', 0)]]"
+          }
+        },
+        "name": "privateDnsZoneConfigs"
+      }
+    ]
+  }
+}

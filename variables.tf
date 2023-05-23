@@ -102,9 +102,7 @@ variable "network_rule_set" {
       subnet_id = string
     })), [])
   })
-  default = {
-    default_action = "Deny"
-  }
+  default     = {}
   description = "ACR firewall configuration"
 }
 

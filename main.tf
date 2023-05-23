@@ -64,35 +64,23 @@ resource "azurerm_container_registry" "acr" {
 }
 
 resource "azurerm_private_endpoint" "private_endpoint" {
-  name                = "${azurerm_container_registry.acr.name}-pep-1"
+  for_each            = { for k in var.private_endpoints : k.name => k if k != null }
+  name                = each.key
   resource_group_name = var.resource_group_name
-  location            = var.location
-  subnet_id           = data.azurerm_subnet.subnet.id
+  location            = each.value["location"]
+  subnet_id           = each.value["subnet_id"]
 
   private_service_connection {
-    name                           = "${azurerm_container_registry.acr.name}-psc-1"
+    name                           = each.value["private_service_connection_name"]
     private_connection_resource_id = azurerm_container_registry.acr.id
     is_manual_connection           = false
     subresource_names              = ["registry"]
   }
-}
 
-resource "azurerm_resource_group_template_deployment" "private_dns_zone_group_template" {
-  name                = "${azurerm_container_registry.acr.name}-customdns"
-  resource_group_name = var.resource_group_name
-  template_content    = file("arm/privateDnsZoneGroup.json")
-  parameters_content = jsonencode({
-    "privateDnsZoneGroupName" = {
-      value = "customdns"
-    },
-    "privateEndpointName" = {
-      value = azurerm_private_endpoint.private_endpoint.name
-    },
-    "privateDnsZoneResourceIds" = {
-      value = [for private_dns_zone in data.azurerm_private_dns_zone.private_dns_zones : private_dns_zone.id]
-    }
-  })
-  deployment_mode = "Incremental"
+  private_dns_zone_group {
+    name                 = "customdns"
+    private_dns_zone_ids = each.value["private_dns_zone_ids"]
+  }
 }
 
 resource "azurerm_monitor_diagnostic_setting" "acr_diagnostics" {
